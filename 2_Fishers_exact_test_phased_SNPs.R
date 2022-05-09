@@ -993,6 +993,68 @@ write.table(TD_results_all, file="results/TD-all_results_info_complete.txt", sep
             row.names = F, col.names = T, quote = F)
 
 
+#How do MAF and LD influence p-value distribution? ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+SNPs_pruned0.2<-read.table("data/Deer31.v2.r2_0.2.prune.in", header=F)
+colnames(SNPs_pruned0.2)<-"SNP.name"
+TD_results_pruned0.2<-subset(TD_results_all, SNP.name %in% SNPs_pruned0.2$SNP.name & MAF_unphased>0.1)
+TD_results_pruned0.2$dataset<-"r20.2MAF0.1"
+TD_results_pruned0.2.2<-subset(TD_results_all, SNP.name %in% SNPs_pruned0.2$SNP.name & MAF_unphased>0.05)
+TD_results_pruned0.2.2$dataset<-"r20.2MAF0.05"
+SNPs_pruned0.5<-read.table("data/Deer31.v2.r2_0.5.prune.in", header=F)
+colnames(SNPs_pruned0.5)<-"SNP.name"
+TD_results_pruned0.5<-subset(TD_results_all, SNP.name %in% SNPs_pruned0.5$SNP.name & MAF_unphased>0.1)
+TD_results_pruned0.5$dataset<-"r20.5MAF0.1"
+TD_results_pruned0.5.2<-subset(TD_results_all, SNP.name %in% SNPs_pruned0.5$SNP.name & MAF_unphased>0.05)
+TD_results_pruned0.5.2$dataset<-"r20.5MAF0.05"
+SNPs_pruned0.8<-read.table("data/Deer31.v2.r2_0.8.prune.in", header=F)
+colnames(SNPs_pruned0.8)<-"SNP.name"
+TD_results_pruned0.8<-subset(TD_results_all, SNP.name %in% SNPs_pruned0.8$SNP.name & MAF_unphased>0.1)
+TD_results_pruned0.8$dataset<-"r20.8MAF0.1"
+TD_results_pruned0.8.2<-subset(TD_results_all, SNP.name %in% SNPs_pruned0.8$SNP.name & MAF_unphased>0.05)
+TD_results_pruned0.8.2$dataset<-"r20.8MAF0.05"
+TD_results_all$dataset<-"complete"
+TD_results_comp<-rbind(TD_results_all, TD_results_pruned0.2)
+TD_results_comp<-rbind(TD_results_comp, TD_results_pruned0.2.2)
+TD_results_comp<-rbind(TD_results_comp, TD_results_pruned0.5)
+TD_results_comp<-rbind(TD_results_comp, TD_results_pruned0.5.2)
+TD_results_comp<-rbind(TD_results_comp, TD_results_pruned0.8)
+TD_results_comp<-rbind(TD_results_comp, TD_results_pruned0.8.2)
+TD_results_comp_sub<-subset(TD_results_comp, p_value < 0.2)
+
+ggplot(TD_results_comp, aes(x=p_value, fill=as.factor(dataset)))+
+  geom_area(aes(y=..count..), alpha=0.5, stat="bin", bins=20, size=0.5)+
+  xlab("p value")+
+  scale_fill_brewer(type = "qual", palette = "Set1")+
+  theme(legend.title = element_blank(), axis.text.x = element_text(size=16, colour = "black"),
+        axis.text.y = element_text(size=16, colour = "black"), 
+        axis.title.x = element_text(size=30, margin = margin(t=20)), 
+        axis.title.y = element_text(size=30, margin = margin(r=20)),
+        axis.line = element_line(colour = "black"),
+        axis.ticks=element_line(size=1), strip.text = element_text(size=22), #, hjust=0.01
+        strip.background = element_rect(colour="black", fill="lightgray"))+
+  facet_grid(rows = vars(status), cols=vars(sex))
+#geom_density(alpha=0.5)
+
+p.MAF_LDeffect<-ggplot(TD_results_comp, aes(x=2*expected_freq, y=p_value,colour=as.factor(dataset)))+
+  geom_smooth(method="gam")+ xlab("sample size")+ylab("p value")+
+  scale_color_brewer(type = "qual", palette = "Dark2", name="dataset")+
+  theme(legend.title = element_text(size=16, colour = "black"), 
+        legend.text = element_text(size=14),
+        axis.text.x = element_text(size=16, colour = "black"),
+        axis.text.y = element_text(size=16, colour = "black"), 
+        axis.title.x = element_text(size=30, margin = margin(t=20)), 
+        axis.title.y = element_text(size=30, margin = margin(r=20)),
+        axis.line = element_line(colour = "black"),
+        axis.ticks=element_line(size=1), strip.text = element_text(size=22), #, hjust=0.01
+        strip.background = element_rect(colour="black", fill="lightgray"))+
+  facet_grid(rows = vars(status), cols=vars(sex))
+
+ggsave("plots/CorrelationSampleSpvalueMAF.LD.png", p.MAF_LDeffect, width=30, height=25, units="cm")
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
 #make manhattan plot split by sex and status (offspring/parent)
 TD_results_all<-read.table("results/TD-all_results_info_complete.txt", header = T)
 
